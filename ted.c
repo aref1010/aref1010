@@ -18,6 +18,10 @@ int check_staged_dir(char *ted_address , char *dir_name);
 int run_config(int argc, char *argv[] , char *ted_address);
 int run_reset(int argc, char *argv[] , char *ted_address);
 int reset(char *ted_address , char *dir_name);
+int run_commit(int argc, char *argv[] , char *ted_address);
+int run_set(int argc, char *argv[] , char *ted_address);
+int shortcut_function(int argc, char *argv[] , char *ted_address);
+int run_status(int argc, char *argv[] , char *ted_address);
 
 
 //functions
@@ -38,7 +42,19 @@ int run_init(int argc, char *argv[]){
         fclose(fp);
         fp = fopen("commit.txt" , "w");
         fclose(fp);
-        fp = fopen("config.txt" , "w");
+        fp = fopen("name.txt" , "w");
+        fclose(fp);
+        fp = fopen("email.txt" , "w");
+        fclose(fp);
+        fp = fopen("id.txt" , "w");
+        fprintf(fp , "0");
+        fclose(fp);
+        fp = fopen("current_branch.txt" , "w");
+        fprintf(fp , "master");
+        fclose(fp);
+        fp = fopen("shortcuts.txt" , "w");
+        fclose(fp);
+        fp = fopen("last_add.txt" , "w");
         fclose(fp);
         if (chdir("..") != 0) return 1;
         fprintf(stdout , "ted directory created successfully");
@@ -216,7 +232,11 @@ int check_ted(int argc, char *argv[] , char *ted_address){
 }
 
 int run_add(int argc, char *argv[] , char *ted_address){
-    char first_address[1024] , tmp_first_address[1024] , tmp2[1024] , file_address[1024];
+    char first_address[1024] , tmp_first_address[1024] , tmp2[1024] , file_address[1024] , last_add_address[1024];
+    strcpy(last_add_address , ted_address);
+    strcat(last_add_address , "\\.ted\\last_add.txt");
+    FILE *last_add = fopen(last_add_address , "w");
+    fclose(last_add);
     if (getcwd(first_address, sizeof(first_address)) == NULL) return 1;
     struct dirent *entry;
     int j;
@@ -274,12 +294,13 @@ int run_add(int argc, char *argv[] , char *ted_address){
                         int scan = fscanf(fp , "%s" , last_add);
                         if (scan != EOF){
                             if(strcmp(last_add , entry->d_name) == 0){
-                                if (last_modify(entry->d_name , lastmodify) != 0) return 1;
-                                scan = fscanf(fp , "%s" , last_add);
-                                if(strcmp(last_add , lastmodify) == 0){
-                                    stage_check = 1;
-                                    break;
-                                }
+                                stage_check = 1;
+                                //if (last_modify(entry->d_name , lastmodify) != 0) return 1;
+                                //scan = fscanf(fp , "%s" , last_add);
+                                //if(strcmp(last_add , lastmodify) == 0){
+                                  //  stage_check = 1;
+                                    //break;
+                                //}
                             }
                         }                    
                         else {
@@ -319,6 +340,9 @@ int run_add(int argc, char *argv[] , char *ted_address){
                                     fseek(fp , len , SEEK_SET);
                                     fwrite(tmp , sizeof(char) , strlen(tmp) , fp);
                                     fprintf(stdout , "%s added successfuly\n" , entry->d_name);
+                                    FILE *last_add = fopen(last_add_address , "a");
+                                    fprintf(last_add , "%s\n" , entry->d_name);
+                                    fclose(last_add);
                                 }
                                 else {
                                     fprintf(stdout , "%s is already added to stage\n" , entry->d_name);
@@ -336,6 +360,9 @@ int run_add(int argc, char *argv[] , char *ted_address){
                         if (last_modify(file_address , lastmodify) != 0) return 1;
                         fprintf(fp , "%s %s " , argv[i] , lastmodify);
                         fprintf(stdout , "%s added successfuly\n" , argv[i]);
+                        FILE *last_add = fopen(last_add_address , "a");
+                        fprintf(last_add , "%s\n" , argv[i]);
+                        fclose(last_add);
                     }
                     fclose(fp);
                 }
@@ -379,7 +406,7 @@ int last_modify(char *filename , char *last_modify) {
 }
 
 int add(char *ted_address , char *dir_name){
-    char lastmodify[1024] , address[1024];
+    char lastmodify[1024] , address[1024] , last_add_address[1024];
     struct dirent *subentry;
     DIR *subdir = opendir(dir_name);
     if (subdir == NULL) {
@@ -410,6 +437,11 @@ int add(char *ted_address , char *dir_name){
                             fseek(fp , len , SEEK_SET);
                             fwrite(tmp , sizeof(char) , strlen(tmp) , fp);
                             fprintf(stdout , "%s added successfuly\n" , subentry->d_name);
+                            strcpy(last_add_address , ted_address);
+                            strcat(last_add_address , "\\.ted\\last_add.txt");
+                            FILE *last_add = fopen(last_add_address , "a");
+                            fprintf(last_add , "%s\n" , subentry->d_name);
+                            fclose(last_add);
                         }
                         else {
                             fprintf(stdout , "%s is already added to stage\n" , subentry->d_name);
@@ -428,6 +460,11 @@ int add(char *ted_address , char *dir_name){
                 if (last_modify(address , lastmodify) != 0) return 1;
                 fprintf(fp , "%s %s " , subentry->d_name , lastmodify);
                 fprintf(stdout , "%s added successfuly\n" , subentry->d_name);
+                strcpy(last_add_address , ted_address);
+                strcat(last_add_address , "\\.ted\\last_add.txt");
+                FILE *last_add = fopen(last_add_address , "a");
+                fprintf(last_add , "%s\n" , subentry->d_name);
+                fclose(last_add);
             }
             fclose(fp);
         }
@@ -463,9 +500,9 @@ int check_staged_dir(char *ted_address , char *dir_name){
                         sprintf(address , "%s\\%s" , dir_name , subentry->d_name);
                         if (last_modify(address , lastmodify) != 0) return 1;
                         scan = fscanf(fp , "%s" , last_add);
-                        if(strcmp(last_add , lastmodify) != 0){
-                            return 2;
-                        }
+                        // if(strcmp(last_add , lastmodify) != 0){
+                        //     return 2;
+                        // }
                         check = 1;
                         break;
                     }
@@ -515,12 +552,17 @@ int run_config(int argc, char *argv[] , char *ted_address){
 }
 
 int run_reset(int argc, char *argv[] , char *ted_address){
-    char first_address[1024] , tmp_first_address[1024] , tmp2[1024] , file_address[1024];
+    char first_address[1024] , tmp_first_address[1024] , tmp2[1024] , file_address[1024] , last_add_address[1024];;
+    strcpy(last_add_address , ted_address);
+    strcat(last_add_address , "\\.ted\\last_add.txt");
     if (getcwd(first_address, sizeof(first_address)) == NULL) return 1;
     struct dirent *entry;
     int j;
     if(strcmp(argv[2] , "-f") == 0){
         j = 3;
+    }
+    else if(strcmp(argv[2] , "-undo") == 0){
+        j = argc - 1;
     }
     else {
         j = 2;
@@ -551,45 +593,8 @@ int run_reset(int argc, char *argv[] , char *ted_address){
             return 1;
         }
         while ((entry = readdir(dir)) != NULL) {
-            if(strcmp(argv[2] , "-n") == 0){
-                int stage_check = 0;
-                char stage_address[1024] , last_add[1024] , lastmodify[1024];
-                strcpy(stage_address, ted_address);
-                strcat(stage_address , "\\.ted\\stage.txt");
-                FILE *fp = fopen(stage_address , "r");
-                if (entry->d_type == DT_DIR && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , "..") != 0 && strcmp(entry->d_name , ".ted") != 0){
-                    if(check_staged_dir(ted_address , entry->d_name) != 2){
-                        printf("%s staged\n" , entry->d_name);
-                    }
-                    else {
-                        printf("%s unstaged\n" , entry->d_name);
-                    }
-                }
-                else {
-                    while (1){
-                        int scan = fscanf(fp , "%s" , last_add);
-                        if (scan != EOF){
-                            if(strcmp(last_add , entry->d_name) == 0){
-                                if (last_modify(entry->d_name , lastmodify) != 0) return 1;
-                                scan = fscanf(fp , "%s" , last_add);
-                                if(strcmp(last_add , lastmodify) == 0){
-                                    stage_check = 1;
-                                    break;
-                                }
-                            }
-                        }                    
-                        else {
-                            break;
-                        }
-                    }
-                    if(stage_check && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , "..") != 0 && strcmp(entry->d_name , ".ted") != 0){
-                        printf("%s staged\n" , entry->d_name);
-                    }
-                    else if(strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , "..") != 0 && strcmp(entry->d_name , ".ted") != 0){
-                        printf("%s unstaged\n" , entry->d_name);
-                    }
-                }
-                fclose(fp);
+            if(strcmp(argv[2] , "-undo") == 0){
+                exist_check = 1;
             }
             else {
                 if (entry->d_type == DT_DIR && strcmp(entry->d_name, argv[i]) == 0){
@@ -613,16 +618,21 @@ int run_reset(int argc, char *argv[] , char *ted_address){
                                 if (last_modify(file_address , lastmodify) != 0) return 1;
                                 scan = fscanf(fp , "%s" , last_add);
                                 line_len += strlen(last_add);
-                                if(strcmp(last_add , lastmodify) != 0){
-                                    fprintf(stdout , "%s is unstaged\n" , argv[i]);
+                                fseek(fp , len*sizeof(char) , SEEK_SET);
+                                for(int k  = 0 ; k < line_len ; k++){
+                                    fwrite("a" , 1 , 1 , fp);
                                 }
-                                else {
-                                    fseek(fp , len*sizeof(char) , SEEK_SET);
-                                    for(int k  = 0 ; k < line_len ; k++){
-                                        fwrite("a" , 1 , 1 , fp);
-                                    }
-                                    printf("%s changed to unstaged\n" , argv[i]);
-                                }
+                                printf("%s changed to unstaged\n" , argv[i]);
+                                // if(strcmp(last_add , lastmodify) != 0){
+                                //     fprintf(stdout , "%s is unstaged\n" , argv[i]);
+                                // }
+                                // else {
+                                //     fseek(fp , len*sizeof(char) , SEEK_SET);
+                                //     for(int k  = 0 ; k < line_len ; k++){
+                                //         fwrite("a" , 1 , 1 , fp);
+                                //     }
+                                //     printf("%s changed to unstaged\n" , argv[i]);
+                                // }
                                 check = 1;
                                 break;
                             }
@@ -639,8 +649,21 @@ int run_reset(int argc, char *argv[] , char *ted_address){
                 }
             }
         }
-        if (!exist_check && strcmp(argv[2] , "-n") != 0){
+        if (!exist_check && strcmp(argv[2] , "-undo") != 0){
             printf("this file or directory not exists\n");
+        }
+        else if(strcmp(argv[2] , "-undo") == 0){
+            FILE *last_add = fopen(last_add_address , "r");
+            while (1){
+                int scan = fscanf(last_add , "%s" , last_add_address);
+                if (scan != EOF){
+                    printf("%s\n" , last_add_address);
+                }                    
+                else {
+                    break;
+                }
+            }
+            fclose(last_add);
         }
         closedir(dir);
     }
@@ -677,16 +700,21 @@ int reset(char *ted_address , char *dir_name){
                         if (last_modify(address , lastmodify) != 0) return 1;
                         scan = fscanf(fp , "%s" , last_add);
                         line_len += strlen(last_add);
-                        if(strcmp(last_add , lastmodify) != 0){
-                            fprintf(stdout , "%s is unstaged\n" , subentry->d_name);
+                        fseek(fp , len*sizeof(char) , SEEK_SET);
+                        for(int k = 0; k < line_len ; k++){
+                            fwrite("a" , 1 , 1 , fp);
                         }
-                        else {
-                            fseek(fp , len*sizeof(char) , SEEK_SET);
-                            for(int k = 0; k < line_len ; k++){
-                                fwrite("a" , 1 , 1 , fp);
-                            }
-                            printf("%s changed to unstaged\n" , subentry->d_name);
-                        }
+                        printf("%s changed to unstaged\n" , subentry->d_name);
+                        // if(strcmp(last_add , lastmodify) != 0){
+                        //     fprintf(stdout , "%s is unstaged\n" , subentry->d_name);
+                        // }
+                        // else {
+                        //     fseek(fp , len*sizeof(char) , SEEK_SET);
+                        //     for(int k = 0; k < line_len ; k++){
+                        //         fwrite("a" , 1 , 1 , fp);
+                        //     }
+                        //     printf("%s changed to unstaged\n" , subentry->d_name);
+                        // }
                         check = 1;
                         break;
                     }
@@ -706,6 +734,309 @@ int reset(char *ted_address , char *dir_name){
     return 0;
 }
 
+int run_commit(int argc, char *argv[] , char *ted_address){
+    if(argc > 4){
+        printf("commit message is invalid");
+        return 0;
+    }
+    else if(strlen(argv[3]) > 72){
+        printf("commit message is too large");
+    }
+    else {
+        char tmp[1024], commit_value[10000], shortcuts_value[1024] , file_address[1024] , stage_value[10000] , date[1024] , username[1024] , current_branch[1024];
+        int commit_number = 0 , id_value , check = 0 , check2 = 0 , check3 = 0;
+        if(strcmp(argv[2] , "-s") == 0){
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\shortcuts.txt");
+            FILE *shortcuts = fopen(file_address , "r");
+            while(1){
+                int scan = fscanf(shortcuts , "%s" , tmp);
+                if (scan != EOF){
+                    if(strcmp(tmp , argv[3]) == 0){
+                        scan = fscanf(shortcuts , "%s" , tmp);
+                        strcpy(argv[3] , tmp);
+                        while(1){
+                            scan = fscanf(shortcuts , "%s" , tmp);
+                            if(strcmp(tmp , "tedpatern") == 0){
+                                break;
+                            }
+                            else {
+                                strcat(argv[3] , " ");
+                                strcat(argv[3] , tmp);
+                            }
+                        }
+                        check3 = 1;
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            if(!check3){
+                printf("this shortcut is not exists");
+            }
+        }
+        if((strcmp(argv[2] , "-s") == 0 && check3) || strcmp(argv[2] , "-s") != 0){
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\stage.txt");
+            FILE *stage = fopen(file_address , "r");
+            while(1){
+                int scan = fscanf(stage , "%s" , tmp);
+                if (scan != EOF){
+                    if((tmp[0] != 'a' || tmp[0] != 'a' || tmp[0] != 'a') && tmp[2] != '/'){
+                        if(check){
+                            strcat(stage_value , tmp);
+                        }
+                        else {
+                            strcpy(stage_value , tmp);
+                        }
+                        strcat(stage_value , " ");
+                        commit_number ++;
+                        check = 1;
+                    }
+                }
+                else {
+                    if(!check){
+                        printf("stage is empty");
+                        return 1;
+                    }
+                    break;
+                }
+            }
+            fclose(stage);
+            stage = fopen(file_address , "w");
+            if (last_modify(file_address , date) != 0) return 1;
+            fclose(stage);
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\id.txt");
+            FILE *id = fopen(file_address , "r");
+            if (fscanf(id , "%d" , &id_value) == EOF) return 1;
+            fclose(id);
+            id_value ++;
+            id = fopen(file_address , "w");
+            fprintf(id , "%d" , id_value);
+            fclose(id);
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\name.txt");
+            FILE *name = fopen(file_address , "r");
+            if (fscanf(name , "%s" , username) == EOF) return 1;
+            fclose(name);
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\current_branch.txt");
+            FILE *branch = fopen(file_address , "r");
+            if (fscanf(branch , "%s" , current_branch) == EOF) return 1;
+            fclose(branch);
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\commit.txt");
+            FILE *commit = fopen(file_address , "r");
+            while(1){
+                int scan = fscanf(commit , "%s" , tmp);
+                if (scan != EOF){
+                    if((tmp[0] != 'a' || tmp[0] != 'a' || tmp[0] != 'a')){
+                        if(check2){
+                            strcat(commit_value , tmp);
+                        }
+                        else {
+                            strcpy(commit_value , tmp);
+                        }
+                        strcat(commit_value , " ");
+                        check2 = 1;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            fclose(commit);
+            fopen(file_address , "w");
+            fclose(commit);
+            strcpy(file_address , ted_address);
+            strcat(file_address , "\\.ted\\commit.txt");
+            commit = fopen(file_address , "a");
+            char *token = strtok(stage_value , " ");
+            while (token != NULL){
+                fprintf(commit , "%s %s " , token , date);
+                token = strtok(NULL , " ");
+            }
+            fprintf(commit , "information: %s %s %s %d %s %d " , date , argv[3] , username , id_value , current_branch , commit_number);
+            fprintf(commit , "%s" , commit_value);
+            fclose(commit);
+            printf("commit %s added successfuly at %s with %d id" , argv[3] , date , id_value);
+        }
+    }
+}
+
+int run_set(int argc, char *argv[] , char *ted_address){
+    char file_address[1024];
+    strcpy(file_address , ted_address);
+    strcat(file_address , "\\.ted\\shortcuts.txt");
+    FILE *shortcuts = fopen(file_address , "a");
+    fprintf(shortcuts , "%s %s tedpatern " , argv[5] , argv[3]);
+    fclose(shortcuts);
+}
+
+int shortcut_function(int argc, char *argv[] , char *ted_address){
+    char file_address[1024] , tmp[1024];
+    int len = 0 , check = 0 , line_len = 0;
+    strcpy(file_address , ted_address);
+    strcat(file_address , "\\.ted\\shortcuts.txt");
+    FILE *shortcuts = fopen(file_address , "r+");
+    while(1){
+        int scan = fscanf(shortcuts , "%s" , tmp);
+        if (scan != EOF){
+            if (strcmp(argv[argc-1] , tmp) == 0){
+                line_len += strlen(argv[argc-1]) + 1;
+                while(strcmp(tmp , "tedpatern") != 0){
+                    scan = fscanf(shortcuts , "%s" , tmp);
+                    line_len += strlen(tmp) + 1;
+                }
+                fseek(shortcuts , len*sizeof(char) , SEEK_SET);
+                for(int i = 0; i < line_len - 1; i++){
+                    fwrite("a" , sizeof(char) , 1 , shortcuts);
+                }
+                if(strcmp(argv[1] , "replace") == 0){
+                    fclose(shortcuts);
+                    shortcuts = fopen(file_address , "a");
+                    fprintf(shortcuts , "%s %s tedpatern " , argv[argc-1] , argv[3]);
+                    printf("shortcut replace successfuly");
+                }
+                else {
+                    printf("shortcut remove successfuly");
+                }
+                check = 1;
+                break;
+            }
+            len += strlen(tmp) + 1;
+        }
+        else {
+            break;
+        }
+    }
+    if (!check){
+        printf("this shortcut is not exists");
+    }
+    fclose(shortcuts);
+}
+
+int run_status(int argc, char *argv[] , char *ted_address){
+    char lastmodify[1024] , address[1024] , last_add_address[1024] , file_name[10000];
+    strcpy(file_name , ". ");
+    struct dirent *subentry;
+    DIR *subdir = opendir(".");
+    if (subdir == NULL) {
+        perror("Error opening current directory");
+        return 1;
+    }
+    while ((subentry = readdir(subdir)) != NULL) {
+        int stage_check = 0;
+        if(subentry->d_type != DT_DIR){
+            strcat(file_name , subentry->d_name);
+            strcat(file_name , " ");
+            printf("%s " , subentry->d_name);
+            char stage_address[1024];
+            strcpy(stage_address, ted_address);
+            strcat(stage_address , "\\.ted\\stage.txt");
+            FILE *fp = fopen(stage_address , "r+");
+            char last_add[1024] , tmp[1024];
+            while (1){
+                int scan = fscanf(fp , "%s" , last_add);
+                if (scan != EOF){
+                    if(strcmp(last_add , subentry->d_name) == 0){
+                        stage_check = 1;
+                        sprintf(address , "%s" , subentry->d_name);
+                        if (last_modify(address , lastmodify) != 0) return 1;
+                        scan = fscanf(fp , "%s" , last_add);
+                        if(strcmp(last_add , lastmodify) != 0){
+                            printf("+M\n");
+                        }
+                        else {
+                            printf("+C\n");
+                        }
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            fclose(fp);
+            strcpy(stage_address, ted_address);
+            strcat(stage_address , "\\.ted\\commit.txt");
+            fp = fopen(stage_address , "r+");
+            while(!stage_check){
+                int scan = fscanf(fp , "%s" , last_add);
+                if (scan != EOF){
+                    if(strcmp(last_add , subentry->d_name) == 0){
+                        stage_check = 1;
+                        sprintf(address , "%s" , subentry->d_name);
+                        if (last_modify(address , lastmodify) != 0) return 1;
+                        scan = fscanf(fp , "%s" , last_add);
+                        if(strcmp(last_add , lastmodify) != 0){
+                            printf("-M\n");
+                        }
+                        else {
+                            printf("-C\n");
+                        }
+                        break;
+                    }
+                }
+                else {
+                    break;
+                }
+            }
+            fclose(fp);
+            if(!stage_check){
+                printf("-A\n");
+            }
+        }
+    }
+    closedir(subdir);
+    char stage_address[1024] , commit_address[1024] , last_add2[1024];
+    strcpy(stage_address, ted_address);
+    strcat(stage_address , "\\.ted\\stage.txt");
+    FILE *fp = fopen(stage_address , "r+");
+    strcpy(commit_address, ted_address);
+    strcat(commit_address , "\\.ted\\commit.txt");
+    FILE *fp2 = fopen(commit_address , "r+");
+    char last_add[1024] , tmp[1024];
+    int exist_check = 0 , stage_check = 1;
+    while (1){
+        int scan = fscanf(fp , "%s" , last_add);
+        int scan2 = fscanf(fp2 , "%s" , last_add2);
+        if (scan != EOF || scan2 != EOF){
+            char *token = strtok(file_name , " ");
+            while (token != NULL){
+                stage_check = 1;
+                if (strcmp(token , last_add) == 0 && scan != EOF){
+                    exist_check = 1;
+                }
+                else if (strcmp(token , last_add2) == 0 && scan2 != EOF){
+                    exist_check = 1;
+                    stage_check = 0;
+                }
+                if(!exist_check){
+                    if(stage_check && last_add[2] != '/'){
+                        printf("%s +D\n" , last_add);
+                    }
+                    else {
+                        strcpy(last_add , last_add2);
+                        scan2 = fscanf(fp2 , "%s" , last_add2);
+                        if(scan2 != EOF && last_add2[2] == '/'  && strcmp(last_add , "information:") != 0){
+                            printf("%s -D\n" , last_add);
+                        }
+                    }
+                }
+                token = strtok(NULL , " ");
+            }
+        }
+        else {
+            break;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
 
 //main
 int main(int argc, char *argv[]){
@@ -753,6 +1084,58 @@ int main(int argc, char *argv[]){
         }
         else if(check_ted(argc , argv , ted_address)){
             return run_reset(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "commit") == 0){
+        if(argc < 4){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_commit(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "set") == 0){
+        if(argc < 6){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_set(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "replace") == 0 || strcmp(argv[1] , "remove") == 0){
+        if(argc < 6 && strcmp(argv[1] , "replace") == 0){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(argc < 4 && strcmp(argv[1] , "remove") == 0){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return shortcut_function(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "status") == 0){
+        if(argc < 2){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_status(argc , argv , ted_address);
         }
         else {
             printf("There is no repository");
