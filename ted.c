@@ -21,7 +21,8 @@ int reset(char *ted_address , char *dir_name);
 int run_commit(int argc, char *argv[] , char *ted_address);
 int run_set(int argc, char *argv[] , char *ted_address);
 int shortcut_function(int argc, char *argv[] , char *ted_address);
-int run_status(int argc, char *argv[] , char *ted_address);
+int run_status(int argc, char *argv[] , char *ted_address , char *dir_name);
+int run_log(int argc , char *argv[] , char *ted_address);
 
 
 //functions
@@ -55,6 +56,11 @@ int run_init(int argc, char *argv[]){
         fp = fopen("shortcuts.txt" , "w");
         fclose(fp);
         fp = fopen("last_add.txt" , "w");
+        fclose(fp);
+        fp = fopen("tmp.txt" , "w");
+        fclose(fp);
+        fp = fopen("branches.txt" , "w");
+        fprintf(fp , "master ");
         fclose(fp);
         if (chdir("..") != 0) return 1;
         fprintf(stdout , "ted directory created successfully");
@@ -91,13 +97,13 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                 if (last_modify(tmp , name) != 0) return 1;
                 if (last_modify("C:\\Users\\alire\\TED\\name.txt" , global_name) != 0) return 1;
                 int gy , gm , gd , gh , gmin , gs , y , m , d , h , min , s;
-                sscanf(global_name , "%02d/%02d/%04d%02d:%02d:%02d" , &gd , &gm , &gy , &gh , &gmin , &gs);
-                sscanf(name , "%02d/%02d/%04d%02d:%02d:%02d" , &d , &m , &y , &h , &min , &s);
-                if(gy <= y){
-                    if(gm <= m){
-                        if(gd <= d){
-                            if(gh <= h){
-                                if(gmin <= min){
+                sscanf(global_name , "%02d/%02d/%04d%02d:%02d:%02d" , &gm , &gd , &gy , &gh , &gmin , &gs);
+                sscanf(name , "%02d/%02d/%04d%02d:%02d:%02d" , &m , &d , &y , &h , &min , &s);
+                if(gy == y){
+                    if(gm == m){
+                        if(gd == d){
+                            if(gh == h){
+                                if(gmin == min){
                                     if(gs > s){
                                         FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                         int scan = fscanf(gname_address , "%s" , tmp2);
@@ -107,7 +113,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                         fclose(name_address);
                                     }
                                 }
-                                else {
+                                else if (gmin > min){
                                     FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                     int scan = fscanf(gname_address , "%s" , tmp2);
                                     fclose(gname_address);
@@ -116,7 +122,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                     fclose(name_address);
                                 }
                             }
-                            else {
+                            else if(gh > h){
                                 FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                 int scan = fscanf(gname_address , "%s" , tmp2);
                                 fclose(gname_address);
@@ -125,7 +131,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                 fclose(name_address);
                             }
                         }
-                        else {
+                        else if(gd > d){
                             FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                             int scan = fscanf(gname_address , "%s" , tmp2);
                             fclose(gname_address);
@@ -134,7 +140,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                             fclose(name_address);
                         }
                     }
-                    else {
+                    else if(gm > m){
                         FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                         int scan = fscanf(gname_address , "%s" , tmp2);
                         fclose(gname_address);
@@ -143,7 +149,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                         fclose(name_address);
                     }
                 }
-                else {
+                else if(gy > y){
                     FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                     int scan = fscanf(gname_address , "%s" , tmp2);
                     fclose(gname_address);
@@ -155,13 +161,13 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                 strcat(tmp , "\\.ted\\email.txt");
                 if (last_modify(tmp , email) != 0) return 1;
                 if (last_modify("C:\\Users\\alire\\TED\\email.txt" , global_email) != 0) return 1;
-                sscanf(global_email , "%02d/%02d/%04d%02d:%02d:%02d" , &gd , &gm , &gy , &gh , &gmin , &gs);
-                sscanf(email , "%02d/%02d/%04d%02d:%02d:%02d" , &d , &m , &y , &h , &min , &s);
-                if(gy <= y){
-                    if(gm <= m){
-                        if(gd <= d){
-                            if(gh <= h){
-                                if(gmin <= min){
+                sscanf(global_email , "%02d/%02d/%04d%02d:%02d:%02d" , &gm , &gd , &gy , &gh , &gmin , &gs);
+                sscanf(email , "%02d/%02d/%04d%02d:%02d:%02d" , &m , &d , &y , &h , &min , &s);
+                if(gy == y){
+                    if(gm == m){
+                        if(gd == d){
+                            if(gh == h){
+                                if(gmin == min){
                                     if(gs > s){
                                         FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                         int scan = fscanf(gemail_address , "%s" , tmp2);
@@ -171,7 +177,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                         fclose(email_address);
                                     }
                                 }
-                                else {
+                                else if(gmin > min){
                                     FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                     int scan = fscanf(gemail_address , "%s" , tmp2);
                                     fclose(gemail_address);
@@ -180,7 +186,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                     fclose(email_address);
                                 }
                             }
-                            else {
+                            else if(gh > h){
                                 FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                 int scan = fscanf(gemail_address , "%s" , tmp2);
                                 fclose(gemail_address);
@@ -189,7 +195,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                 fclose(email_address);
                             }
                         }
-                        else {
+                        else if(gd > d){
                             FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                             int scan = fscanf(gemail_address , "%s" , tmp2);
                             fclose(gemail_address);
@@ -198,7 +204,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                             fclose(email_address);
                         }
                     }
-                    else {
+                    else if(gm > m){
                         FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                         int scan = fscanf(gemail_address , "%s" , tmp2);
                         fclose(gemail_address);
@@ -207,7 +213,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                         fclose(email_address);
                     }
                 }
-                else {
+                else if(gy > y){
                     FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                     int scan = fscanf(gemail_address , "%s" , tmp2);
                     fclose(gemail_address);
@@ -369,7 +375,7 @@ int run_add(int argc, char *argv[] , char *ted_address){
             }
         }
         if (!exist_check && strcmp(argv[2] , "-n") != 0){
-            printf("this file or directory not exists\n");
+            printf("%s not exists\n" , argv[i]);
         }
         closedir(dir);
     }
@@ -784,7 +790,7 @@ int run_commit(int argc, char *argv[] , char *ted_address){
             while(1){
                 int scan = fscanf(stage , "%s" , tmp);
                 if (scan != EOF){
-                    if((tmp[0] != 'a' || tmp[0] != 'a' || tmp[0] != 'a') && tmp[2] != '/'){
+                    if((tmp[0] != 'a' || tmp[1] != 'a' || tmp[2] != 'a')){
                         if(check){
                             strcat(stage_value , tmp);
                         }
@@ -856,10 +862,12 @@ int run_commit(int argc, char *argv[] , char *ted_address){
             commit = fopen(file_address , "a");
             char *token = strtok(stage_value , " ");
             while (token != NULL){
-                fprintf(commit , "%s %s " , token , date);
+                fprintf(commit , "%s " , token);
+                token = strtok(NULL , " ");
+                fprintf(commit , "%s " , token);
                 token = strtok(NULL , " ");
             }
-            fprintf(commit , "information: %s %s %s %d %s %d " , date , argv[3] , username , id_value , current_branch , commit_number);
+            fprintf(commit , "information: %s %s $ %s %d %s %d " , date , argv[3] , username , id_value , current_branch , commit_number/2);
             fprintf(commit , "%s" , commit_value);
             fclose(commit);
             printf("commit %s added successfuly at %s with %d id" , argv[3] , date , id_value);
@@ -919,11 +927,11 @@ int shortcut_function(int argc, char *argv[] , char *ted_address){
     fclose(shortcuts);
 }
 
-int run_status(int argc, char *argv[] , char *ted_address){
-    char lastmodify[1024] , address[1024] , last_add_address[1024] , file_name[10000];
-    strcpy(file_name , ". ");
+int run_status(int argc, char *argv[] , char *ted_address , char *dir_name){
+    char lastmodify[1024] , address[1024] , address2[1024] , address3[1024] , last_add_address[1024];
+    FILE *file_name;
     struct dirent *subentry;
-    DIR *subdir = opendir(".");
+    DIR *subdir = opendir(dir_name);
     if (subdir == NULL) {
         perror("Error opening current directory");
         return 1;
@@ -931,9 +939,12 @@ int run_status(int argc, char *argv[] , char *ted_address){
     while ((subentry = readdir(subdir)) != NULL) {
         int stage_check = 0;
         if(subentry->d_type != DT_DIR){
-            strcat(file_name , subentry->d_name);
-            strcat(file_name , " ");
             printf("%s " , subentry->d_name);
+            strcpy(address2 , ted_address);
+            strcat(address2 , "\\.ted\\tmp.txt");
+            file_name = fopen(address2 , "a");
+            fprintf(file_name , "%s " , subentry->d_name);
+            fclose(file_name);
             char stage_address[1024];
             strcpy(stage_address, ted_address);
             strcat(stage_address , "\\.ted\\stage.txt");
@@ -944,7 +955,7 @@ int run_status(int argc, char *argv[] , char *ted_address){
                 if (scan != EOF){
                     if(strcmp(last_add , subentry->d_name) == 0){
                         stage_check = 1;
-                        sprintf(address , "%s" , subentry->d_name);
+                        sprintf(address , "%s\\%s" , dir_name , subentry->d_name);
                         if (last_modify(address , lastmodify) != 0) return 1;
                         scan = fscanf(fp , "%s" , last_add);
                         if(strcmp(last_add , lastmodify) != 0){
@@ -969,7 +980,7 @@ int run_status(int argc, char *argv[] , char *ted_address){
                 if (scan != EOF){
                     if(strcmp(last_add , subentry->d_name) == 0){
                         stage_check = 1;
-                        sprintf(address , "%s" , subentry->d_name);
+                        sprintf(address , "%s\\%s" , dir_name , subentry->d_name);
                         if (last_modify(address , lastmodify) != 0) return 1;
                         scan = fscanf(fp , "%s" , last_add);
                         if(strcmp(last_add , lastmodify) != 0){
@@ -990,44 +1001,38 @@ int run_status(int argc, char *argv[] , char *ted_address){
                 printf("-A\n");
             }
         }
+        else if(strcmp(subentry->d_name , ".") != 0 && strcmp(subentry->d_name , "..") != 0 && strcmp(subentry->d_name , ".ted") != 0){
+            sprintf(address , "%s\\%s" , dir_name , subentry->d_name);
+            run_status(argc , argv , ted_address , address);
+        }
     }
     closedir(subdir);
-    char stage_address[1024] , commit_address[1024] , last_add2[1024];
+    char stage_address[1024] , commit_address[1024];
     strcpy(stage_address, ted_address);
     strcat(stage_address , "\\.ted\\stage.txt");
     FILE *fp = fopen(stage_address , "r+");
-    strcpy(commit_address, ted_address);
-    strcat(commit_address , "\\.ted\\commit.txt");
-    FILE *fp2 = fopen(commit_address , "r+");
-    char last_add[1024] , tmp[1024];
-    int exist_check = 0 , stage_check = 1;
+    char last_add[1024] , last_add2[1024] , tmp[1024] , tmp2[10000];
+    int exist_check = 0;
+    strcpy(address2 , ted_address);
+    strcat(address2 , "\\.ted\\tmp.txt");
     while (1){
+        exist_check = 0;
         int scan = fscanf(fp , "%s" , last_add);
-        int scan2 = fscanf(fp2 , "%s" , last_add2);
-        if (scan != EOF || scan2 != EOF){
-            char *token = strtok(file_name , " ");
-            while (token != NULL){
-                stage_check = 1;
-                if (strcmp(token , last_add) == 0 && scan != EOF){
+        if (scan != EOF){
+            file_name = fopen(address2 , "a+");
+            int scan2 = fscanf(file_name , "%s" , tmp2);
+            while (scan2 != EOF){
+                if (strcmp(tmp2 , last_add) == 0){
                     exist_check = 1;
                 }
-                else if (strcmp(token , last_add2) == 0 && scan2 != EOF){
-                    exist_check = 1;
-                    stage_check = 0;
-                }
-                if(!exist_check){
-                    if(stage_check && last_add[2] != '/'){
-                        printf("%s +D\n" , last_add);
-                    }
-                    else {
-                        strcpy(last_add , last_add2);
-                        scan2 = fscanf(fp2 , "%s" , last_add2);
-                        if(scan2 != EOF && last_add2[2] == '/'  && strcmp(last_add , "information:") != 0){
-                            printf("%s -D\n" , last_add);
-                        }
-                    }
-                }
-                token = strtok(NULL , " ");
+                scan2 = fscanf(file_name , "%s" , tmp2);
+            }
+            fclose(file_name);
+            if(!exist_check && last_add[2] != '/'){
+                file_name = fopen(address2 , "a");
+                printf("%s +D\n" , last_add);
+                fprintf(file_name , "%s " , last_add);
+                fclose(file_name);
             }
         }
         else {
@@ -1035,8 +1040,445 @@ int run_status(int argc, char *argv[] , char *ted_address){
         }
     }
     fclose(fp);
+    strcpy(commit_address, ted_address);
+    strcat(commit_address , "\\.ted\\commit.txt");
+    fp = fopen(commit_address , "r+");
+    int stage_check = 0;
+    while (1){
+        exist_check = 0;
+        stage_check = 0;
+        int scan = fscanf(fp , "%s" , last_add);
+        if (scan != EOF){
+            file_name = fopen(address2 , "a+");
+            int scan2 = fscanf(file_name , "%s" , tmp2);
+            while (scan2 != EOF){
+                if (strcmp(tmp2 , last_add) == 0){
+                    exist_check = 1;
+                }
+                scan2 = fscanf(file_name , "%s" , tmp2);
+            }
+            fclose(file_name);
+            if(!exist_check && last_add[2] != '/'  && (last_add[0] > '9' || last_add[0] < '1') && (last_add[0] != 'a' || last_add[1] != 'a' || last_add[2] != 'a')){
+                strcpy(last_add2 , last_add);
+                scan = fscanf(fp , "%s" , last_add);
+                if(last_add[2] == '/' && strcmp(last_add2 , "information:") != 0){
+                    file_name = fopen(address2 , "a");
+                    printf("%s -D\n" , last_add2);
+                    fprintf(file_name , "%s " , last_add2);
+                    fclose(file_name);
+                }
+            }
+        }
+        else {
+            break;
+        }
+    }
+    fclose(fp);
+    fclose(file_name);
     return 0;
 }
+
+int run_log(int argc , char *argv[] , char *ted_address){
+    char address[1024] , tmp[1024] , statement[10000];
+    strcpy(address , ted_address);
+    strcat(address , "\\.ted\\commit.txt");
+    FILE *commit = fopen(address , "r");
+    if(argc == 2){
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            if(strcmp(tmp , "information:") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("\"%s" , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    printf(" %s" , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                printf("\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s \n" , tmp);
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+    }
+    else if(strcmp(argv[2] , "-n") == 0){
+        int n = 0 , main_n;
+        sscanf(argv[3] , "%d" , &main_n);
+        int scan = fscanf(commit , "%s" , tmp);
+        while(n < main_n){
+            if(strcmp(tmp , "information:") == 0){
+                n ++;
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("\"%s" , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    printf(" %s" , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                printf("\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s " , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                printf("%s \n" , tmp);
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+    }
+    else if(strcmp(argv[2] , "-branch") == 0){
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\branches.txt");
+        FILE *branches = fopen(address , "r");
+        int check = 0;
+        int scan2 = fscanf(branches , "%s" , tmp);
+        while (scan2 != EOF) {
+            if(strcmp(tmp , argv[3]) == 0){
+                check = 1;
+                break;
+            }
+            scan2 = fscanf(branches , "%s" , tmp);
+        }
+        fclose(branches);
+        if (check){
+            int scan = fscanf(commit , "%s" , tmp);
+            while(scan != EOF){
+                int branch_check = 0;
+                if(strcmp(tmp , "information:") == 0){
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcpy(statement , tmp);
+                    strcat(statement , " ");
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcat(statement , "\"");
+                    strcat(statement , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                    while(strcmp(tmp , "$") != 0){
+                        strcat(statement , " ");
+                        strcat(statement , tmp);
+                        scan = fscanf(commit , "%s" , tmp);
+                    }
+                    strcat(statement , "\" ");
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcat(statement , tmp);
+                    strcat(statement , " ");
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcat(statement , tmp);
+                    strcat(statement , " ");
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcat(statement , tmp);
+                    strcat(statement , " ");
+                    if(strcmp(tmp , argv[3]) == 0){
+                        branch_check = 1;
+                    }
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcat(statement , tmp);
+                    strcat(statement , " ");
+                    if(branch_check){
+                        printf("%s\n" , statement);
+                    }
+                }
+                scan = fscanf(commit , "%s" , tmp);
+            }
+        }
+        else {
+            printf("%s not exists" , argv[3]);
+        }
+    }
+    else if(strcmp(argv[2] , "-author") == 0){
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            int author_check = 0;
+            if(strcmp(tmp , "information:") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                strcpy(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , "\"");
+                strcat(statement , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    strcat(statement , " ");
+                    strcat(statement , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                strcat(statement , "\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                if(strcmp(tmp , argv[3]) == 0){
+                    author_check = 1;
+                }
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                if(author_check){
+                    printf("%s\n" , statement);
+                }
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+    }
+    else if(strcmp(argv[2] , "-since") == 0){
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            int date_check = 0;
+            if(strcmp(tmp , "information:") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                strcpy(statement , tmp);
+                strcat(statement , " ");
+                int gy , gm , gd , gh , gmin , gs , y , m , d , h , min , s;
+                sscanf(tmp , "%02d/%02d/%04d%02d:%02d:%02d" , &gm , &gd , &gy , &gh , &gmin , &gs);
+                sscanf(argv[3] , "%02d/%02d/%04d" , &m , &d , &y);
+                sscanf(argv[4] , "%02d:%02d:%02d" , &h , &min , &s);
+                if(gy == y){
+                    if(gm == m){
+                        if(gd == d){
+                            if(gh == h){
+                                if(gmin == min){
+                                    if(gs > s){
+                                        date_check = 1;
+                                    }
+                                }
+                                else if(gmin > min){
+                                    date_check = 1;
+                                }
+                            }
+                            else if(gh > h){
+                                date_check = 1;
+                            }
+                        }
+                        else if(gd > d){
+                            date_check = 1;
+                        }
+                    }
+                    else if(gm > m){
+                        date_check = 1;
+                    }
+                }
+                else if(gy > y){
+                    date_check = 1;
+                }
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , "\"");
+                strcat(statement , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    strcat(statement , " ");
+                    strcat(statement , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                strcat(statement , "\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                if(date_check){
+                    printf("%s\n" , statement);
+                }
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+    }
+    else if(strcmp(argv[2] , "-before") == 0){
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            int date_check = 0;
+            if(strcmp(tmp , "information:") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                strcpy(statement , tmp);
+                strcat(statement , " ");
+                int gy , gm , gd , gh , gmin , gs , y , m , d , h , min , s;
+                sscanf(argv[3] , "%02d/%02d/%04d" , &gm , &gd , &gy);
+                sscanf(argv[4] , "%02d:%02d:%02d" , &gh , &gmin , &gs);
+                sscanf(tmp , "%02d/%02d/%04d%02d:%02d:%02d" , &m , &d , &y , &h , &min , &s);
+                if(gy == y){
+                    if(gm == m){
+                        if(gd == d){
+                            if(gh == h){
+                                if(gmin == min){
+                                    if(gs > s){
+                                        date_check = 1;
+                                    }
+                                }
+                                else if(gmin > min){
+                                    date_check = 1;
+                                }
+                            }
+                            else if(gh > h){
+                                date_check = 1;
+                            }
+                        }
+                        else if(gd > d){
+                            date_check = 1;
+                        }
+                    }
+                    else if(gm > m){
+                        date_check = 1;
+                    }
+                }
+                else if(gy > y){
+                    date_check = 1;
+                }
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , "\"");
+                strcat(statement , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    strcat(statement , " ");
+                    strcat(statement , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                strcat(statement , "\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                if(date_check){
+                    printf("%s\n" , statement);
+                }
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+    }
+    else if(strcmp(argv[2] , "-search") == 0){
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            int search_check = 0;
+            if(strcmp(tmp , "information:") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                strcpy(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , "\"");
+                strcat(statement , tmp);
+                for(int i = 3 ; i < argc ; i ++){
+                    if(strstr(argv[i] , "$") != NULL){
+                        for(int j = 0; j < strlen(argv[i]) - strlen(strstr(argv[i] , "$")) ; j ++){
+                            if(argv[i][j] != tmp[j]){
+                                search_check = 0;
+                                break;
+                            }
+                            else {
+                                search_check = 1;
+                            }
+                        }
+                        if(search_check){
+                            for(int j = 1 ; j < strlen(strstr(argv[i] , "$")) ; j ++){
+                                if(argv[i][strlen(argv[i])-j] != tmp[strlen(tmp)-j]){
+                                    search_check = 0;
+                                    break;
+                                }
+                                else {
+                                    search_check = 1;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        if(strcmp(tmp , argv[i]) == 0){
+                            search_check = 1;
+                        }
+                    }
+                }
+                scan = fscanf(commit , "%s" , tmp);
+                while(strcmp(tmp , "$") != 0){
+                    for(int i = 3 ; i < argc ; i ++){
+                        if(strstr(argv[i] , "$") != NULL){
+                            int search_check2 = 0;
+                            for(int j = 0; j < strlen(argv[i]) - strlen(strstr(argv[i] , "$")) ; j ++){
+                                if(argv[i][j] != tmp[j]){
+                                    search_check2 = 0;
+                                    break;
+                                }
+                                else {
+                                    search_check2 = 1;
+                                }
+                            }
+                            if(search_check2){
+                                for(int j = 1 ; j < strlen(strstr(argv[i] , "$")) ; j ++){
+                                    if(argv[i][strlen(argv[i])-j] != tmp[strlen(tmp)-j]){
+                                        search_check2 = 0;
+                                        break;
+                                    }
+                                    else {
+                                        search_check2 = 1;
+                                    }
+                                }
+                            }
+                            if(search_check2){
+                                search_check = 1;
+                            }
+                        }
+                        else {
+                            if(strcmp(tmp , argv[i]) == 0){
+                                search_check = 1;
+                            }
+                        }
+                    }
+                    strcat(statement , " ");
+                    strcat(statement , tmp);
+                    scan = fscanf(commit , "%s" , tmp);
+                }
+                strcat(statement , "\" ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                scan = fscanf(commit , "%s" , tmp);
+                strcat(statement , tmp);
+                strcat(statement , " ");
+                if(search_check){
+                    printf("%s\n" , statement);
+                }
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+        fclose(commit);
+        fopen(address , "r");
+    }
+    fclose(commit);
+    return 0;
+}
+
 
 //main
 int main(int argc, char *argv[]){
@@ -1135,7 +1577,26 @@ int main(int argc, char *argv[]){
             return 0;
         }
         else if(check_ted(argc , argv , ted_address)){
-            return run_status(argc , argv , ted_address);
+            FILE *file_name , *file_name2;
+            char address[1024];
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\tmp.txt");
+            file_name = fopen(address , "w+");
+            fprintf(file_name , ". ");
+            fclose(file_name);
+            return run_status(argc , argv , ted_address , ".");
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "log") == 0){
+        if(argc < 2){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_log(argc , argv , ted_address);
         }
         else {
             printf("There is no repository");
