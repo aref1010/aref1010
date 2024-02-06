@@ -7,6 +7,8 @@
 #include <dirent.h>
 #include <windows.h>
 #include <stdbool.h>
+#include <shellapi.h>
+#include <sys/stat.h>
 
 //prototypes
 int run_init(int argc, char *argv[]);
@@ -23,6 +25,18 @@ int run_set(int argc, char *argv[] , char *ted_address);
 int shortcut_function(int argc, char *argv[] , char *ted_address);
 int run_status(int argc, char *argv[] , char *ted_address , char *dir_name);
 int run_log(int argc , char *argv[] , char *ted_address);
+int run_branch(int argc , char *argv[] , char *ted_address);
+int status(int argc , char *argv[] , char *ted_address);
+int create_list(char *ted_address , char *file_name);
+int copy_ted(char *ted_address , char *file_name);
+int run_tree(int argc , char *argv[] , char *ted_address);
+int run_tag(int argc , char *argv[] , char *ted_address);
+int run_checkout(int argc , char *argv[] , char *ted_address);
+int copy_file(const char* source_path, const char* destination_path);
+int delete(char *ted_address);
+int run_grep(int argc , char *argv[] , char *ted_address);
+int print_green(char *word);
+BOOL CopyDirectory(LPTSTR lpSourcePath, LPTSTR lpDestPath);
 
 
 //functions
@@ -62,6 +76,10 @@ int run_init(int argc, char *argv[]){
         fp = fopen("branches.txt" , "w");
         fprintf(fp , "master ");
         fclose(fp);
+        fp = fopen("tag.txt" , "w");
+        fclose(fp);
+        mkdir("hbranch");
+        mkdir("commits");
         if (chdir("..") != 0) return 1;
         fprintf(stdout , "ted directory created successfully");
     }
@@ -90,21 +108,24 @@ int check_ted(int argc, char *argv[] , char *ted_address){
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".ted") == 0){
                 exists = 1;
-                char global_name[1024] , name[1024] , global_email[1024] , email[1024] , tmp[1024] , tmp2[100];
+                char global_name[1024] , name[1024] , tmp3[1024] , global_email[1024] , email[1024] , tmp[1024] , tmp2[100];
                 strcpy(ted_address , address);
                 strcpy(tmp , address);
                 strcat(tmp , "\\.ted\\name.txt");
+                FILE *fp1 = fopen(tmp , "r");
                 if (last_modify(tmp , name) != 0) return 1;
                 if (last_modify("C:\\Users\\alire\\TED\\name.txt" , global_name) != 0) return 1;
+                int scan3 = fscanf(fp1 , "%s" , tmp3);
+                fclose(fp1);
                 int gy , gm , gd , gh , gmin , gs , y , m , d , h , min , s;
                 sscanf(global_name , "%02d/%02d/%04d%02d:%02d:%02d" , &gm , &gd , &gy , &gh , &gmin , &gs);
                 sscanf(name , "%02d/%02d/%04d%02d:%02d:%02d" , &m , &d , &y , &h , &min , &s);
-                if(gy == y){
-                    if(gm == m){
-                        if(gd == d){
-                            if(gh == h){
-                                if(gmin == min){
-                                    if(gs > s){
+                if(gy == y && scan3 != EOF){
+                    if(gm == m && scan3 != EOF){
+                        if(gd == d && scan3 != EOF){
+                            if(gh == h && scan3 != EOF){
+                                if(gmin == min && scan3 != EOF){
+                                    if(gs > s || scan3 == EOF){
                                         FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                         int scan = fscanf(gname_address , "%s" , tmp2);
                                         fclose(gname_address);
@@ -113,7 +134,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                         fclose(name_address);
                                     }
                                 }
-                                else if (gmin > min){
+                                else if (gmin > min || scan3 == EOF){
                                     FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                     int scan = fscanf(gname_address , "%s" , tmp2);
                                     fclose(gname_address);
@@ -122,7 +143,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                     fclose(name_address);
                                 }
                             }
-                            else if(gh > h){
+                            else if(gh > h  || scan3 == EOF){
                                 FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                                 int scan = fscanf(gname_address , "%s" , tmp2);
                                 fclose(gname_address);
@@ -131,7 +152,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                 fclose(name_address);
                             }
                         }
-                        else if(gd > d){
+                        else if(gd > d || scan3 == EOF){
                             FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                             int scan = fscanf(gname_address , "%s" , tmp2);
                             fclose(gname_address);
@@ -140,7 +161,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                             fclose(name_address);
                         }
                     }
-                    else if(gm > m){
+                    else if(gm > m || scan3 == EOF){
                         FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                         int scan = fscanf(gname_address , "%s" , tmp2);
                         fclose(gname_address);
@@ -149,7 +170,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                         fclose(name_address);
                     }
                 }
-                else if(gy > y){
+                else if(gy > y || scan3 == EOF){
                     FILE *gname_address = fopen("C:\\Users\\alire\\TED\\name.txt" , "r");
                     int scan = fscanf(gname_address , "%s" , tmp2);
                     fclose(gname_address);
@@ -159,16 +180,19 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                 }
                 strcpy(tmp , address);
                 strcat(tmp , "\\.ted\\email.txt");
+                FILE *fp2 = fopen(tmp , "r");
                 if (last_modify(tmp , email) != 0) return 1;
                 if (last_modify("C:\\Users\\alire\\TED\\email.txt" , global_email) != 0) return 1;
+                int scan4 = fscanf(fp2 , "%s" , tmp3);
+                fclose(fp2);
                 sscanf(global_email , "%02d/%02d/%04d%02d:%02d:%02d" , &gm , &gd , &gy , &gh , &gmin , &gs);
                 sscanf(email , "%02d/%02d/%04d%02d:%02d:%02d" , &m , &d , &y , &h , &min , &s);
-                if(gy == y){
-                    if(gm == m){
-                        if(gd == d){
-                            if(gh == h){
-                                if(gmin == min){
-                                    if(gs > s){
+                if(gy == y && scan4 != EOF){
+                    if(gm == m && scan4 != EOF){
+                        if(gd == d && scan4 != EOF){
+                            if(gh == h && scan4 != EOF){
+                                if(gmin == min && scan4 != EOF){
+                                    if(gs > s || scan4 == EOF){
                                         FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                         int scan = fscanf(gemail_address , "%s" , tmp2);
                                         fclose(gemail_address);
@@ -177,7 +201,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                         fclose(email_address);
                                     }
                                 }
-                                else if(gmin > min){
+                                else if(gmin > min || scan4 == EOF){
                                     FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                     int scan = fscanf(gemail_address , "%s" , tmp2);
                                     fclose(gemail_address);
@@ -186,7 +210,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                     fclose(email_address);
                                 }
                             }
-                            else if(gh > h){
+                            else if(gh > h || scan4 == EOF){
                                 FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                                 int scan = fscanf(gemail_address , "%s" , tmp2);
                                 fclose(gemail_address);
@@ -195,7 +219,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                                 fclose(email_address);
                             }
                         }
-                        else if(gd > d){
+                        else if(gd > d || scan4 == EOF){
                             FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                             int scan = fscanf(gemail_address , "%s" , tmp2);
                             fclose(gemail_address);
@@ -204,7 +228,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                             fclose(email_address);
                         }
                     }
-                    else if(gm > m){
+                    else if(gm > m || scan4 == EOF){
                         FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                         int scan = fscanf(gemail_address , "%s" , tmp2);
                         fclose(gemail_address);
@@ -213,7 +237,7 @@ int check_ted(int argc, char *argv[] , char *ted_address){
                         fclose(email_address);
                     }
                 }
-                else if(gy > y){
+                else if(gy > y || scan4 == EOF){
                     FILE *gemail_address = fopen("C:\\Users\\alire\\TED\\email.txt" , "r");
                     int scan = fscanf(gemail_address , "%s" , tmp2);
                     fclose(gemail_address);
@@ -871,8 +895,27 @@ int run_commit(int argc, char *argv[] , char *ted_address){
             fprintf(commit , "%s" , commit_value);
             fclose(commit);
             printf("commit %s added successfuly at %s with %d id" , argv[3] , date , id_value);
+            char file_list[1024] , char_id[1024] , destination[1024];
+            strcpy(destination , ted_address);
+            strcat(destination , "\\.ted\\commits\\");
+            sprintf(char_id , "%d" , id_value);
+            strcat(destination , char_id);
+            int status = mkdir(destination);
+            copy_ted(ted_address , destination);
+            // strcpy(file_list , "C:\\Users\\alire\\TED\\commits\\");
+            // sprintf(char_id , "%d.txt" , id_value);
+            // strcat(file_list , char_id);
+            strcpy(file_list , ted_address);
+            strcat(file_list , "\\.ted\\hbranch\\");
+            strcat(file_list , current_branch);
+            strcat(file_list , ".txt");
+            FILE *fp2 = fopen(file_list , "w");
+            fprintf(fp2 , "%d" , id_value);
+            fclose(fp2);
+            // create_list(ted_address , file_list);
         }
     }
+    return 0;
 }
 
 int run_set(int argc, char *argv[] , char *ted_address){
@@ -1007,11 +1050,15 @@ int run_status(int argc, char *argv[] , char *ted_address , char *dir_name){
         }
     }
     closedir(subdir);
+    return 0;
+}
+
+int status(int argc , char *argv[] , char *ted_address){
     char stage_address[1024] , commit_address[1024];
     strcpy(stage_address, ted_address);
     strcat(stage_address , "\\.ted\\stage.txt");
-    FILE *fp = fopen(stage_address , "r+");
-    char last_add[1024] , last_add2[1024] , tmp[1024] , tmp2[10000];
+    FILE *file_name , *fp = fopen(stage_address , "r+");
+    char last_add[1024] , address2[1024] , last_add2[1024] , tmp[1024] , tmp2[10000];
     int exist_check = 0;
     strcpy(address2 , ted_address);
     strcat(address2 , "\\.ted\\tmp.txt");
@@ -1075,7 +1122,6 @@ int run_status(int argc, char *argv[] , char *ted_address , char *dir_name){
     }
     fclose(fp);
     fclose(file_name);
-    return 0;
 }
 
 int run_log(int argc , char *argv[] , char *ted_address){
@@ -1179,8 +1225,19 @@ int run_log(int argc , char *argv[] , char *ted_address){
                     scan = fscanf(commit , "%s" , tmp);
                     strcat(statement , tmp);
                     strcat(statement , " ");
-                    if(strcmp(tmp , argv[3]) == 0){
-                        branch_check = 1;
+                    if(strstr(tmp , "$") != NULL){
+                        char *token = strtok(tmp , "$");
+                        while(token != NULL){
+                            if(strcmp(token , argv[3]) == 0){
+                                branch_check = 1;
+                            }
+                            token = strtok(NULL , "$");
+                        }
+                    }
+                    else {
+                        if(strcmp(tmp , argv[3]) == 0){
+                            branch_check = 1;
+                        }
                     }
                     scan = fscanf(commit , "%s" , tmp);
                     strcat(statement , tmp);
@@ -1479,6 +1536,857 @@ int run_log(int argc , char *argv[] , char *ted_address){
     return 0;
 }
 
+int run_branch(int argc , char *argv[] , char *ted_address){
+    char address[1024] , branch[1024] , commit_value[10000] , branch_commit[1024] , tmp[1024];
+    if (argc == 2){
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\branches.txt");
+        FILE *branches = fopen(address , "r");
+        int scan = fscanf(branches , "%s" , branch);
+        while(scan != EOF){
+            printf("%s\n" , branch);
+            scan = fscanf(branches , "%s" , branch);
+        }
+    }
+    else {
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\branches.txt");
+        FILE *branches = fopen(address , "r+");
+        int check = 0 , scan = fscanf(branches , "%s" , branch);
+        while(scan != EOF){
+            if(strcmp(argv[2] , branch) == 0){
+                check = 1;
+                break;
+            }
+            scan = fscanf(branches , "%s" , branch);
+        }
+        if(check){
+            printf("this branch is already exists");
+            return 0;
+        }
+        else {
+            fprintf(branches , "%s " , argv[2]);
+            fclose(branches);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\commit.txt");
+            FILE *commit = fopen(address , "r");
+            int first_check = 0 , commit_check = 0 , first_word = 0 , scan2 = fscanf(commit , "%s" , tmp);
+            strcpy(branch_commit , tmp);
+            strcat(branch_commit , " ");
+            while(scan2 != EOF){
+                if(strcmp(tmp , "$") == 0 && !commit_check){
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , " ");
+                    scan2 = fscanf(commit , "%s" , tmp);
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , " ");
+                    scan2 = fscanf(commit , "%s" , tmp);
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , " ");
+                    scan2 = fscanf(commit , "%s" , tmp);
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , "$");
+                    strcat(branch_commit , argv[2]);
+                    strcat(branch_commit , " ");
+                    scan2 = fscanf(commit , "%s" , tmp);
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , " ");
+                    commit_check = 1;
+                    scan2 = fscanf(commit , "%s" , tmp);
+                }
+                if(!commit_check && first_check){
+                    strcat(branch_commit , tmp);
+                    strcat(branch_commit , " ");
+                }
+                else if (first_check){
+                    if(!first_word && scan2 != EOF){
+                        first_word = 1;
+                        strcpy(commit_value , tmp);
+                        strcat(commit_value , " ");
+                    }
+                    else{
+                        strcat(commit_value , tmp);
+                        strcat(commit_value , " ");
+                    }
+                }
+                scan2 = fscanf(commit , "%s" , tmp);
+                first_check = 1;
+            }
+            fclose(commit);
+            commit = fopen(address , "w");
+            fclose(commit);
+            commit = fopen(address , "a");
+            fprintf(commit , "%s%s" , branch_commit , commit_value);
+            fclose(commit);
+            printf("this branch created successfully");
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\hbranch\\");
+            strcat(address , argv[2]);
+            strcat(address , ".txt");
+            FILE *fp2 = fopen(address , "w");
+            int id_value;
+            char address3[1024];
+            strcpy(address3 , ted_address);
+            strcat(address3 , "\\.ted\\id.txt");
+            FILE *fp3 = fopen(address3 , "r");
+            fscanf(fp3 , "%d" , &id_value);
+            fprintf(fp2 , "%d" , id_value);
+            fclose(fp2);
+            return 0;
+        }
+    }
+}
+
+int create_list(char *ted_address , char *file_name){
+    char address[1024] , lastmodify[1024];
+    struct dirent *entry;
+    DIR *dir = opendir(ted_address);
+    FILE *fp;
+    while ((entry = readdir(dir)) != NULL){
+        if(entry->d_type == DT_DIR && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcat(address , entry->d_name);
+            create_list(address , file_name);
+        }
+        else if(strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcat(address , entry->d_name);
+            fp = fopen(file_name , "a");
+            if (last_modify(address , lastmodify) != 0) return 1;
+            fprintf(fp , "%s %s " , entry->d_name , lastmodify);
+            fclose(fp);
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+int copy_ted(char *ted_address , char *destination){
+    char address[1024] , address2[1024];
+    struct dirent *entry;
+    DIR *dir = opendir(ted_address);
+    FILE *fp;
+    while ((entry = readdir(dir)) != NULL){
+        if(entry->d_type == DT_DIR && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcat(address , entry->d_name);
+            strcpy(address2 , destination);
+            strcat(address2 , "\\");
+            strcat(address2 , entry->d_name);
+            int status = mkdir(address2);
+            copy_ted(address , address2);
+        }
+        else if(strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcpy(address2 , destination);
+            strcat(address2 , "\\");
+            strcat(address , entry->d_name);
+            strcat(address2 , entry->d_name);
+            copy_file(address , address2);
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+int run_tree(int argc , char *argv[] , char *ted_address){
+    char address[1024] , tmp[1024] , master[1024] , branch[1024];
+    int master_id[1000] , branch_id[1000];
+    strcpy(address , ted_address);
+    strcat(address , "\\.ted\\commit.txt");
+    FILE *commit = fopen(address , "r");
+    int first_check = 0 , count = 0 , branch_count = 0 , master_count = 0 , id , scan = fscanf(commit , "%s" , tmp); 
+    while(scan != EOF){
+        if(strcmp(tmp , "$") == 0){
+            scan = fscanf(commit , "%s" , tmp);
+            scan = fscanf(commit , "%s" , tmp);
+            sscanf(tmp , "%d" , &id);
+            scan = fscanf(commit , "%s" , tmp);
+            if(!first_check){
+                first_check = 1;
+                if(strstr(tmp , "$") != NULL){
+                    char *token = strtok(tmp , "$");
+                    strcpy(master , token);
+                    token = strtok(NULL , "$");
+                    strcpy(branch , token);
+                    count = 1;
+                    branch_count ++;
+                    master_count ++;
+                    master_id[master_count] = id;
+                    branch_id[branch_count] = id;
+                }
+                else {
+                    strcpy(master , tmp);
+                    master_count ++;
+                    master_id[master_count] = id;
+                }
+            }
+            else {
+                if(strstr(tmp , "$") != NULL){
+                    char *token = strtok(tmp , "$");
+                    token = strtok(NULL , "$");
+                    strcpy(branch , token);
+                    master_count ++;
+                    branch_count ++;
+                    if(strcmp(master , "master") == 0){
+                        count = master_count;
+                    }
+                    else {
+                        count = branch_count;
+                    }
+                    master_id[master_count] = id;
+                    branch_id[branch_count] = id;
+                }
+                else {
+                    if(strcmp(master , tmp) == 0){
+                        master_count ++;
+                        master_id[master_count] = id;
+                    }
+                    else {
+                        branch_count ++;
+                        branch_id[branch_count] = id;
+                    }
+                }
+            }
+        }
+        scan = fscanf(commit , "%s" , tmp);
+    }
+    if(strcmp(master , "master") == 0){
+        for(int i = master_count ; i >= count ; i--){
+            printf("\n%02d\n|" , master_id[i]);
+        }
+        printf(" \\\n");
+        for(int i = 1 ; i <= branch_count-1 ; i++){
+            if(count-i <= 0){
+                if(i == branch_count-1){
+                    if(count - branch_count != 0){
+                        printf("| %02d\n| /\n" , branch_id[branch_count-i]);
+                    }
+                    else{
+                        printf("| %02d\n" , branch_id[branch_count-i]);
+                    }
+                }
+                else{
+                    printf("| %02d\n| |\n" , branch_id[branch_count-i]);
+                }
+            }
+            else {
+                if(i == branch_count-1){
+                    if(count - branch_count != 0){
+                        printf("%02d %02d\n| /\n" , master_id[count-i] , branch_id[branch_count-i]);
+                    }
+                    else{
+                        printf("%02d %02d\n" , master_id[count-i] , branch_id[branch_count-i]);
+                    }
+                }
+                else{
+                    printf("%02d %02d\n| |\n" , master_id[count-i] , branch_id[branch_count-i]);
+                }
+            }
+        }
+        if(branch_count == 1){
+            printf("| /\n");
+        }
+        for(int i = 1 ; i <= count-branch_count ; i++){
+            printf("%02d\n" , master_id[count - branch_count + 1 - i]);
+            if(i != count-branch_count){
+                printf("|\n");
+            }
+        }
+    }
+    else {
+        for(int i = branch_count ; i >= count ; i--){
+            printf("\n%02d\n|" , branch_id[i]);
+        }
+        printf(" \\\n");
+        for(int i = 1 ; i <= master_count-1 ; i++){
+            if(count-i <= 0){
+                if(i == master_count-1){
+                    if(count - master_count != 0){
+                        printf("| %02d\n| /\n" , master_id[master_count-i]);
+                    }
+                    else{
+                        printf("| %02d\n" , master_id[master_count-i]);
+                    }
+                }
+                else{
+                    printf("| %02d\n| |\n" , master_id[master_count-i]);
+                }
+            }
+            else {
+                if(i == master_count-1){
+                    if(count - master_count != 0){
+                        printf("%02d %02d\n| /\n" , branch_id[count-i] , master_id[master_count-i]);
+                    }
+                    else{
+                        printf("%02d %02d\n" , branch_id[count-i] , master_id[master_count-i]);
+                    }
+                }
+                else{
+                    printf("%02d %02d\n| |\n" , branch_id[count-i] , master_id[master_count-i]);
+                }
+            }
+        }
+        if(master_count == 1){
+            printf("| /\n");
+        }
+        for(int i = 1 ; i <= count-master_count ; i++){
+            printf("%02d\n" , branch_id[count - master_count + 1 - i]);
+            if(i != count-master_count){
+                printf("|\n");
+            }
+        }
+    }
+    return 0;
+}
+
+int run_tag(int argc , char *argv[] , char *ted_address){
+    char address[1024] , tmp[1024] , date[1024];
+    strcpy(address , ted_address);
+    strcat(address , "\\.ted\\tag.txt");
+    FILE *tag;
+    if(argc == 2){
+        char tags[100][1024];
+        int count = 0;
+        tag = fopen(address , "r");
+        int scan = fscanf(tag , "%s" , tmp);
+        strcpy(tags[count] , tmp);
+        count ++;
+        while(scan != EOF){
+            if(strcmp(tmp , "$") == 0){
+                scan = fscanf(tag , "%s" , tmp);
+                if(scan != EOF){
+                    strcpy(tags[count] , tmp);
+                    count ++;
+                }
+            }
+            scan = fscanf(tag , "%s" , tmp);
+        }
+        fclose(tag);
+        for(int i = 0 ; i < count ; i++){
+            for(int j = 0 ; j < count-i-1 ; j++){
+                if(strcmp(tags[j] , tags[j+1]) > 0){
+                    strcpy(tmp , tags[j]);
+                    strcpy(tags[j] , tags[j+1]);
+                    strcpy(tags[j+1] , tmp);
+                }
+            }
+        }
+        for(int i = 0 ; i < count ; i++){
+            printf("%s\n" , tags[i]);
+        }
+    }
+    else if (strcmp(argv[2] , "-a") == 0){
+        tag = fopen(address , "r");
+        int check = 0 , scan = fscanf(tag , "%s" , tmp);
+        if(strcmp(tmp , argv[3]) == 0){
+            printf("this tag is already exsits");
+            check = 1;
+        }
+        else {
+            while(scan != EOF){
+                if(strcmp(tmp , "$") == 0){
+                    scan = fscanf(tag , "%s" , tmp);
+                    if(scan != EOF){
+                        if(strcmp(tmp , argv[3]) == 0){
+                            printf("this tag is already exsits");
+                            check = 1;
+                        }
+                    }
+                }
+                scan = fscanf(tag , "%s" , tmp);
+            }
+        }
+        fclose(tag);
+        if(!check){
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\tag.txt");
+            tag = fopen(address , "a");
+            fprintf(tag , "%s " , argv[3]);
+            if(argc > 4){
+                if(strcmp(argv[4] , "-m") == 0){
+                    if(argc > 6){
+                        fprintf(tag , "%s " , argv[7]);
+                    }
+                    else {
+                        strcpy(address , ted_address);
+                        strcat(address , "\\.ted\\commit.txt");
+                        FILE *commit = fopen(address , "r");
+                        int scan2 = fscanf(commit , "%s" , tmp);
+                        while(scan2 != EOF){
+                            if(strcmp(tmp , "$") == 0){
+                                scan2 = fscanf(commit , "%s" , tmp);
+                                scan2 = fscanf(commit , "%s" , tmp);
+                                fprintf(tag , "%s " , tmp);
+                                fclose(commit);
+                                break;
+                            }
+                            scan2 = fscanf(commit , "%s" , tmp);
+                        }
+                    }
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\name.txt");
+                    FILE *name = fopen(address , "r");
+                    fscanf(name , "%s" , tmp);
+                    fprintf(tag , "%s " , tmp);
+                    fclose(name);
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\email.txt");
+                    FILE *email = fopen(address , "r");
+                    fscanf(email , "%s" , tmp);
+                    fprintf(tag , "%s " , tmp);
+                    fclose(email);
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\tag.txt");
+                    fclose(tag);
+                    if (last_modify(address , date) != 0) return 1;
+                    tag = fopen(address , "a");
+                    fprintf(tag , "%s " , date);
+                    fprintf(tag , "%s $ " , argv[5]);
+                    fclose(tag);
+                }
+                else if(strcmp(argv[4] , "-c") == 0){
+                    fprintf(tag , "%s " , argv[5]);
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\name.txt");
+                    FILE *name = fopen(address , "r");
+                    fscanf(name , "%s" , tmp);
+                    fprintf(tag , "%s " , tmp);
+                    fclose(name);
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\email.txt");
+                    FILE *email = fopen(address , "r");
+                    fscanf(email , "%s" , tmp);
+                    fprintf(tag , "%s " , tmp);
+                    fclose(email);
+                    strcpy(address , ted_address);
+                    strcat(address , "\\.ted\\tag.txt");
+                    fclose(tag);
+                    if (last_modify(address , date) != 0) return 1;
+                    tag = fopen(address , "a");
+                    fprintf(tag , "%s " , date);
+                    fprintf(tag , "$ ");
+                    fclose(tag);
+                }
+            }
+            else {
+                strcpy(address , ted_address);
+                strcat(address , "\\.ted\\commit.txt");
+                FILE *commit = fopen(address , "r");
+                int scan3 = fscanf(commit , "%s" , tmp);
+                while(scan3 != EOF){
+                    if(strcmp(tmp , "$") == 0){
+                        scan3 = fscanf(commit , "%s" , tmp);
+                        scan3 = fscanf(commit , "%s" , tmp);
+                        fprintf(tag , "%s " , tmp);
+                        fclose(commit);
+                        break;
+                    }
+                    scan3 = fscanf(commit , "%s" , tmp);
+                }
+                strcpy(address , ted_address);
+                strcat(address , "\\.ted\\name.txt");
+                FILE *name = fopen(address , "r");
+                fscanf(name , "%s" , tmp);
+                fprintf(tag , "%s " , tmp);
+                fclose(name);
+                strcpy(address , ted_address);
+                strcat(address , "\\.ted\\email.txt");
+                FILE *email = fopen(address , "r");
+                fscanf(email , "%s" , tmp);
+                fprintf(tag , "%s " , tmp);
+                fclose(email);
+                strcpy(address , ted_address);
+                strcat(address , "\\.ted\\tag.txt");
+                fclose(tag);
+                if (last_modify(address , date) != 0) return 1;
+                tag = fopen(address , "a");
+                fprintf(tag , "%s " , date);
+                fprintf(tag , "$ " , argv[5]);
+                fclose(tag);
+            }
+            printf("tag %s created successfully");
+        }
+    }
+    else if (strcmp(argv[2] , "show") == 0){
+        tag = fopen(address , "r");
+        int scan = fscanf(tag , "%s" , tmp);
+        if(strcmp(tmp , argv[3]) == 0){
+            printf("tag %s\n" , tmp);
+            scan = fscanf(tag , "%s" , tmp);
+            printf("commit %s\n" , tmp);
+            scan = fscanf(tag , "%s" , tmp);
+            printf("Author: %s " , tmp);
+            scan = fscanf(tag , "%s" , tmp);
+            printf("<%s>\n" , tmp);
+            scan = fscanf(tag , "%s" , tmp);
+            printf("Date: %s\n" , tmp);
+            scan = fscanf(tag , "%s" , tmp);
+            printf("Message: ");
+            while (strcmp(tmp , "$") != 0){
+                printf("%s " , tmp);
+                scan = fscanf(tag , "%s" , tmp);
+            }
+        }
+        else {
+            while(scan != EOF){
+                if(strcmp(tmp , "$") == 0){
+                    scan = fscanf(tag , "%s" , tmp);
+                    if(strcmp(tmp , argv[3]) == 0 && scan != EOF){
+                        printf("tag %s\n" , tmp);
+                        scan = fscanf(tag , "%s" , tmp);
+                        printf("commit %s\n" , tmp);
+                        scan = fscanf(tag , "%s" , tmp);
+                        printf("Author: %s " , tmp);
+                        scan = fscanf(tag , "%s" , tmp);
+                        printf("<%s>\n" , tmp);
+                        scan = fscanf(tag , "%s" , tmp);
+                        printf("Date: %s\n" , tmp);
+                        scan = fscanf(tag , "%s" , tmp);
+                        printf("Message: ");
+                        while (strcmp(tmp , "$") != 0){
+                            printf("%s " , tmp);
+                            scan = fscanf(tag , "%s" , tmp);
+                        }
+                        break;
+                    }
+                }
+                scan = fscanf(tag , "%s" , tmp);
+            }
+        }
+    }
+    return 0;
+}
+
+int run_checkout(int argc , char *argv[] , char *ted_address){
+    char tmp[1024];
+    // strcpy(tmp , ted_address);
+    // strcat(tmp , "\\.ted\\tmp.txt");
+    // create_list(ted_address , tmp);
+    if(argv[2][0] >= '0' && argv[2][0] <= '9'){
+        char address[1024] , tmp[1024] , current_branch[1024];
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\commits\\");
+        strcat(address , argv[2]);
+        delete(ted_address);
+        copy_ted(address , ted_address);
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\commit.txt");
+        FILE *commit = fopen(address , "r");
+        int scan = fscanf(commit , "%s" , tmp);
+        while(scan != EOF){
+            if(strcmp(tmp , "$") == 0){
+                scan = fscanf(commit , "%s" , tmp);
+                scan = fscanf(commit , "%s" , tmp);
+                if(strcmp(argv[2] , tmp) == 0){
+                    scan = fscanf(commit , "%s" , tmp);
+                    strcpy(current_branch , tmp);
+                    break;
+                }
+            }
+            scan = fscanf(commit , "%s" , tmp);
+        }
+        fclose(commit);
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\current_branch.txt");
+        printf("%s\n" , current_branch);
+        FILE *branch = fopen(address , "w");
+        fprintf(branch , "%s" , current_branch);
+        fclose(branch);
+    }
+    else if(argv[2][0] == 'H' && argv[2][1] == 'E' && argv[2][2] == 'A' && argv[2][3] == 'D'){
+        if(strlen(argv[2]) == 4){
+            char address[1024] , id[1024] , current_branch[1024];
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\current_branch.txt");
+            FILE *cbranch = fopen(address , "r");
+            fscanf(cbranch , "%s" , current_branch);
+            fclose(cbranch);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\hbranch\\");
+            strcat(address , current_branch);
+            strcat(address , ".txt");
+            FILE *branch = fopen(address , "r");
+            fscanf(branch , "%s" , id);
+            fclose(branch);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\commits\\");
+            strcat(address , id);
+            delete(ted_address);
+            copy_ted(address , ted_address);
+        }
+        else {
+            char address[1024] , current_branch[1024] , sid[1024];
+            int id , n;
+            char *token = strtok(argv[2] , "-");
+            token = strtok(NULL , "-");
+            sscanf(token , "%d" , &n);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\current_branch.txt");
+            FILE *cbranch = fopen(address , "r");
+            fscanf(cbranch , "%s" , current_branch);
+            fclose(cbranch);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\hbranch\\");
+            strcat(address , current_branch);
+            strcat(address , ".txt");
+            FILE *branch = fopen(address , "r");
+            fscanf(branch , "%d" , &id);
+            fclose(branch);
+            sprintf(sid , "%d" , id-n);
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\commits\\");
+            strcat(address , sid);
+            delete(ted_address);
+            copy_ted(address , ted_address);
+        }
+    }
+    else {
+        char address[1024] , id[1024];
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\hbranch\\");
+        strcat(address , argv[2]);
+        strcat(address , ".txt");
+        FILE *branch = fopen(address , "r");
+        fscanf(branch , "%s" , id);
+        fclose(branch);
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\commits\\");
+        strcat(address , id);
+        delete(ted_address);
+        copy_ted(address , ted_address);
+        strcpy(address , ted_address);
+        strcat(address , "\\.ted\\current_branch.txt");
+        branch = fopen(address , "w");
+        fprintf(branch , "%s" , argv[2]);
+        fclose(branch);
+    }
+    printf("checkout complete successfully");
+    return 0;
+}
+
+int delete(char *ted_address){
+    char address[1024] , address2[1024];
+    struct dirent *entry;
+    DIR *dir = opendir(ted_address);
+    FILE *fp;
+    while ((entry = readdir(dir)) != NULL){
+        if(entry->d_type == DT_DIR && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcat(address , entry->d_name);
+            delete(address);
+            RemoveDirectory(address);
+        }
+        else if(strcmp(entry->d_name , "ted.c") != 0 && strcmp(entry->d_name , ".") != 0 && strcmp(entry->d_name , ".ted") != 0 && strcmp(entry->d_name , "..") != 0){
+            strcpy(address , ted_address);
+            strcat(address , "\\");
+            strcat(address , entry->d_name);
+            _unlink(address);
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+int copy_file(const char* source_path, const char* destination_path) {
+  // باز کردن فایل مبدا در حالت خواندن
+  FILE* source_file = fopen(source_path, "r");
+  if (source_file == NULL) {
+    perror("Error opening source file");
+    return 1;
+  }
+
+  // باز کردن فایل مقصد در حالت نوشتن
+  FILE* destination_file = fopen(destination_path, "w");
+  if (destination_file == NULL) {
+    perror("Error opening destination file");
+    fclose(source_file);
+    return 1;
+  }
+
+  // خواندن و نوشتن محتویات فایل به صورت بلوک
+  char buffer[1024];
+  size_t bytes_read;
+  while ((bytes_read = fread(buffer, 1, sizeof(buffer), source_file)) > 0) {
+    fwrite(buffer, 1, bytes_read, destination_file);
+  }
+
+  // بستن فایل ها
+  fclose(source_file);
+  fclose(destination_file);
+
+  return 0;
+}
+
+int run_grep(int argc , char *argv[] , char *ted_address){
+    if(argc > 6){
+        if(strcmp(argv[6] , "-c") == 0){
+            char address[1024];
+            strcpy(address , ted_address);
+            strcat(address , "\\.ted\\commits\\");
+            strcat(address , argv[7]);
+            char *tmp , tmp2[10000] , tmp3[1024];
+            strcpy(tmp2 , " ");
+            FILE *fp = fopen(address , "r");
+            while (fgets(tmp , 1000 , fp) != NULL){
+                strcat(tmp2 , tmp);
+            }
+            print_green(tmp2);
+            for(int i = 0 ; i < strlen(tmp2) ; i++){
+                if(tmp2[i] == '\n'){
+                    tmp2[i] == '$';
+                }
+            }
+            char *token = strtok(tmp2 , " ");
+            strcpy(tmp3 , token);
+            int check = 0 , n = 1;
+            while(token != NULL){
+                if(strcmp(token , "$") == 0){
+                    if(check){
+                        printf("%s\n" , tmp3);
+                        if(argc == 9){
+                            printf("%d\n" , n);
+                        }
+                    }
+                    n ++;
+                    token = strtok(NULL , " ");
+                    if(token != NULL){
+                        strcpy(tmp3 , token);
+                    }
+                    else {
+                        break;
+                    }
+                }
+                else if(strcmp(token , argv[5]) == 0){
+                    printf("%s " , tmp3);
+                    print_green(argv[5]);
+                    strcpy(tmp3 , " ");
+                    check = 1;
+                }
+                strcat(tmp3 , " ");
+                strcat(tmp3 , token);
+                token = strtok(NULL , " ");
+            }
+        }
+        else if(strcmp(argv[6] , "-n") == 0){
+            char *tmp , tmp2[10000] , tmp3[1024];
+            strcpy(tmp2 , " ");
+            FILE *fp = fopen(argv[3] , "r");
+            while (fgets(tmp , 1000 , fp) != NULL){
+                strcat(tmp2 , tmp);
+            }
+            print_green(tmp2);
+            for(int i = 0 ; i < strlen(tmp2) ; i++){
+                if(tmp2[i] == '\n'){
+                    tmp2[i] == '$';
+                }
+            }
+            char *token = strtok(tmp2 , " ");
+            strcpy(tmp3 , token);
+            int check = 0 , n = 1;
+            while(token != NULL){
+                if(strcmp(token , "$") == 0){
+                    if(check){
+                        printf("%s\n" , tmp3);
+                        printf("%d\n" , n);
+                    }
+                    n++;
+                    token = strtok(NULL , " ");
+                    if(token != NULL){
+                        strcpy(tmp3 , token);
+                    }
+                    else {
+                        break;
+                    }
+                }
+                else if(strcmp(token , argv[5]) == 0){
+                    printf("%s " , tmp3);
+                    print_green(argv[5]);
+                    strcpy(tmp3 , " ");
+                    check = 1;
+                }
+                strcat(tmp3 , " ");
+                strcat(tmp3 , token);
+                token = strtok(NULL , " ");
+            }
+        }
+    }
+    else {
+        char *tmp , tmp2[10000] , tmp3[1024];
+        strcpy(tmp2 , " ");
+        FILE *fp = fopen(argv[3] , "r");
+        while (fgets(tmp , 1000 , fp) != NULL){
+            strcat(tmp2 , tmp);
+        }
+        print_green(tmp2);
+        for(int i = 0 ; i < strlen(tmp2) ; i++){
+            if(tmp2[i] == '\n'){
+                tmp2[i] == '$';
+            }
+        }
+        char *token = strtok(tmp2 , " ");
+        strcpy(tmp3 , token);
+        int check = 0;
+        while(token != NULL){
+            if(strcmp(token , "$") == 0){
+                if(check){
+                    printf("%s\n" , tmp3);
+                }
+                token = strtok(NULL , " ");
+                if(token != NULL){
+                    strcpy(tmp3 , token);
+                }
+                else {
+                    break;
+                }
+            }
+            else if(strcmp(token , argv[5]) == 0){
+                printf("%s " , tmp3);
+                print_green(argv[5]);
+                strcpy(tmp3 , " ");
+                check = 1;
+            }
+            strcat(tmp3 , " ");
+            strcat(tmp3 , token);
+            token = strtok(NULL , " ");
+        }
+    }
+    return 0;
+}
+
+int print_green(char *word){
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    GetConsoleScreenBufferInfo(hConsole, &info);
+    WORD old_attributes = info.wAttributes;
+
+  // تنظیم رنگ متن
+    SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
+  // چاپ کلمه
+    printf("%s" , word);
+  // بازگرداندن رنگ به حالت پیش فرض
+    SetConsoleTextAttribute(hConsole, old_attributes);
+    return 0;
+}
+
+BOOL CopyDirectory(LPTSTR lpSourcePath, LPTSTR lpDestPath) {
+  SHFILEOPSTRUCT FileOp;
+
+  ZeroMemory(&FileOp, sizeof(SHFILEOPSTRUCT));
+  FileOp.hwnd = NULL;
+  FileOp.wFunc = FO_COPY;
+  FileOp.pFrom = lpSourcePath;
+  FileOp.pTo = lpDestPath;
+  FileOp.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+
+  return (SHFileOperation(&FileOp) == 0);
+}
+
 
 //main
 int main(int argc, char *argv[]){
@@ -1585,6 +2493,7 @@ int main(int argc, char *argv[]){
             fprintf(file_name , ". ");
             fclose(file_name);
             return run_status(argc , argv , ted_address , ".");
+            return status(argc , argv , ted_address);
         }
         else {
             printf("There is no repository");
@@ -1602,4 +2511,65 @@ int main(int argc, char *argv[]){
             printf("There is no repository");
         }
     }
+    else if(strcmp(argv[1] , "branch") == 0){
+        if(argc < 2){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_branch(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "checkout") == 0){
+        if(argc < 3){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_checkout(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "tree") == 0){
+        if(argc < 2){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_tree(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "tag") == 0){
+        if(argc < 2){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_tag(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    else if(strcmp(argv[1] , "grep") == 0){
+        if(argc < 6){
+            printf("Invalid input!");
+            return 0;
+        }
+        else if(check_ted(argc , argv , ted_address)){
+            return run_grep(argc , argv , ted_address);
+        }
+        else {
+            printf("There is no repository");
+        }
+    }
+    return 0;
 }
