@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پاسخ کوبنده</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #7d3c98;
+            padding: 20px;
+            overflow: auto; /* صفحه اسکرول‌پذیر */
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin: 20px auto;
+            padding-bottom: 100px; /* فضای کافی برای دکمه قلب */
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #d6336c;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: fadeIn 1.5s forwards 0.5s;
+        }
+        
+        .name-container {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #ffeef4, #fff9fb);
+            box-shadow: 0 4px 10px rgba(214, 51, 108, 0.1);
+            max-width: 90%;
+        }
+        
+        .name {
+            color: #e84393;
+            font-weight: bold;
+            font-size: 2.8rem;
+            display: block;
+            margin: 0 auto;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards 1s;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            padding: 0 15px;
+            line-height: 1.2;
+        }
+        
+        p {
+            font-size: 1.3rem;
+            line-height: 1.7;
+            margin: 15px 0;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards 1.5s;
+            text-align: justify;
+            text-align-last: center;
+        }
+        
+        .heart {
+            color: #ff4757;
+            display: inline-block;
+            animation: beat 1s infinite alternate;
+            margin: 0 5px;
+        }
+        
+        .cake {
+            width: 180px;
+            margin: 15px auto;
+            opacity: 0;
+            animation: fadeIn 1s forwards 2s, float 3s ease-in-out infinite 3s;
+        }
+        
+        .balloons {
+            position: absolute;
+            width: 100%;
+            top: -100px;
+            opacity: 0;
+            animation: balloonsIn 1s forwards 2.5s;
+        }
+        
+        .balloon {
+            position: absolute;
+            width: 50px;
+            height: 60px;
+            border-radius: 50%;
+        }
+        
+        .balloon:nth-child(1) { left: 10%; background: #ff6b6b; animation: floatUp 8s infinite linear 3s; }
+        .balloon:nth-child(2) { left: 30%; background: #48dbfb; animation: floatUp 10s infinite linear 3.5s; }
+        .balloon:nth-child(3) { left: 50%; background: #1dd1a1; animation: floatUp 7s infinite linear 4s; }
+        .balloon:nth-child(4) { left: 70%; background: #f368e0; animation: floatUp 9s infinite linear 4.5s; }
+        .balloon:nth-child(5) { left: 90%; background: #ff9f43; animation: floatUp 11s infinite linear 5s; }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: confettiDrop 5s infinite;
+        }
+        
+        .heart-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: #ff4757;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 71, 87, 0.5);
+            opacity: 0;
+            animation: fadeIn 1s forwards 3s, pulse 1.5s infinite;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .heart-btn i {
+            font-size: 40px;
+            color: white;
+        }
+        
+        .heart-btn:hover {
+            transform: translateX(-50%) scale(1.1);
+            box-shadow: 0 7px 25px rgba(255, 71, 87, 0.7);
+        }
+        
+        .heart-btn.active {
+            background: #d63031;
+            transform: translateX(-50%) scale(1.2);
+        }
+        
+        .message {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #e84393;
+            opacity: 0;
+            animation: fadeIn 1s forwards 2s;
+            position: relative;
+        }
+        
+        .decoration {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            color: #ff6b6b;
+            opacity: 0.7;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        @keyframes beat {
+            to { transform: scale(1.2); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes balloonsIn {
+            to { top: 0; opacity: 1; }
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(10deg); opacity: 0; }
+        }
+        
+        @keyframes confettiDrop {
+            0% { transform: translateY(-100px) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        /* اسکرول بار زیبا */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #ffe6f2;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ff6b9c;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d6336c;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .name {
+                font-size: 2.2rem;
+            }
+            
+            p {
+                font-size: 1.1rem;
+            }
+            
+            .heart-btn {
+                width: 70px;
+                height: 70px;
+                bottom: 20px;
+            }
+            
+            .heart-btn i {
+                font-size: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="balloons">
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+            <div class="balloon"></div>
+        </div>
+        
+        <h1>سلام و درود</h1>
+        
+        <div class="name-container">
+            <span class="name">آجی جون</span>
+        </div>
+        
+        <div class="message">
+            <div class="decoration">❀</div>
+            <p>خواستم به خاطر جبران اون پیامت روی تبلتم این کارت مخصوص رو برات بسازم. امیدوارم ازش خوشت بیاد! 😁<span class="heart">♥</span></p>
+        </div>
+        
+        <img class="cake" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48cGF0aCBmaWxsPSIjZjJiYzNkIiBkPSJNNTAgMTUwYzAtMjggMjItNDAgNTAtNDAgMjggMCA1MCAxMiA1MCA0MHYxMEg1MHYtMTB6Ii8+PHBhdGggZmlsbD0iI2Y4ZDNlYyIgZD0iTTUwIDE1MGgxMDB2LTI1YzAtMjAtMTUtMzUtMzUtMzVzLTM1IDE1LTM1IDM1djI1eiIvPjxjaXJjbGUgZmlsbD0iI2ZmYzI2OSIgY3g9IjEwMCIgY3k9IjEyMCIgcj0iMjAiLz48Y2lyY2xlIGZpbGw9IiNmZmM0YzAiIGN4PSI3MCIgY3k9IjExNSIgcj0iMTUiLz48Y2lyY2xlIGZpbGw9IiNmZmUwYjYiIGN4PSIxMzAiIGN5PSIxMTUiIHI9IjE1Ii8+PHBhdGggZmlsbD0iI2Q0MmIzOCIgZD0iTTEwMCA3MGMwLTEyIDEwLTIwIDIwLTIwczIwIDggMjAgMjB2MTBIMTAwVjcweiIvPjwvc3ZnPg==" alt="کیک تولد">
+        
+        <div class="message">
+            <p>دکمه قلب رو فشار بده تا یه آهنگ فوق العاده رو با صدای خواننده معروف بشنوی</p>
+        </div>
+    </div>
+
+    <div class="heart-btn" id="heartButton">
+        <i class="fas fa-heart"></i>
+    </div>
+
+    <script>
+        // ایجاد کانفتی‌های رنگی
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#48dbfb', '#1dd1a1', '#f368e0', '#ff9f43', '#ffd32a'];
+            const container = document.querySelector('.container');
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 5 + 's';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 12 + 5 + 'px';
+                confetti.style.height = Math.random() * 12 + 5 + 'px';
+                container.appendChild(confetti);
+            }
+        }
+        
+        // ایجاد المان صوتی با لینک مستقیم
+        const audio = new Audio('https://raw.githubusercontent.com/aref1010/aref1010/main/eesa.ogg');
+        audio.preload = 'auto';
+        
+        // مدیریت کلیک روی قلب
+        const heartButton = document.getElementById('heartButton');
+        let isPlaying = false;
+        
+        heartButton.addEventListener('click', function() {
+            if (isPlaying) {
+                audio.pause();
+                audio.currentTime = 0;
+                heartButton.classList.remove('active');
+                isPlaying = false;
+            } else {
+                audio.play().catch(error => {
+                    console.error("خطا در پخش آهنگ:", error);
+                    alert("مشکل در پخش آهنگ. لطفاً لینک آهنگ را بررسی کنید یا از مرورگر دیگری استفاده نمایید.");
+                });
+                heartButton.classList.add('active');
+                createConfetti();
+                isPlaying = true;
+                
+                // پس از پایان آهنگ، حالت قلب به حالت اول بازگردد
+                audio.onended = function() {
+                    heartButton.classList.remove('active');
+                    isPlaying = false;
+                };
+            }
+        });
+        
+        // اجرای خودکار انیمیشن‌ها
+        window.onload = function() {
+            // افزودن کانفتی‌ها پس از بارگیری صفحه
+            setTimeout(createConfetti, 4000);
+            
+            // اسکرول به بالای صفحه
+            window.scrollTo(0, 0);
+        };
+    </script>
+</body>
+</html>
